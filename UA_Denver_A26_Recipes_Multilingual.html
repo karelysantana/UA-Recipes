@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UA Denver A26 — Recipe Book</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; min-height: 100vh; }
+
+  /* LANGUAGE SELECTOR */
+  #lang-screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #1F3864 0%, #2E5FA3 100%);
+  }
+  .lang-logo { color: white; font-size: 0.85rem; letter-spacing: 3px; text-transform: uppercase; opacity: 0.7; margin-bottom: 0.5rem; }
+  .lang-title { color: white; font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; text-align: center; }
+  .lang-sub { color: rgba(255,255,255,0.65); font-size: 1rem; margin-bottom: 3rem; text-align: center; }
+  .lang-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; width: 100%; max-width: 480px; }
+  .lang-btn {
+    background: white;
+    border: none;
+    border-radius: 16px;
+    padding: 1.5rem 1rem;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  .lang-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+  .lang-flag { font-size: 2.5rem; margin-bottom: 0.5rem; display: block; }
+  .lang-name { font-size: 1.1rem; font-weight: 700; color: #1F3864; display: block; }
+  .lang-native { font-size: 0.85rem; color: #888; display: block; margin-top: 2px; }
+
+  /* RECIPE APP */
+  #app { display: none; }
+  .app-header {
+    background: #1F3864;
+    color: white;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+  .app-header-left { display: flex; align-items: center; gap: 0.75rem; }
+  .back-btn { background: rgba(255,255,255,0.15); border: none; color: white; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; }
+  .back-btn:hover { background: rgba(255,255,255,0.25); }
+  .app-title { font-size: 1rem; font-weight: 700; }
+  .app-lang-badge { font-size: 0.75rem; opacity: 0.7; }
+  .lang-switch-btn { background: rgba(255,255,255,0.15); border: none; color: white; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; }
+
+  /* RECIPE LIST */
+  #recipe-list { padding: 1rem; max-width: 700px; margin: 0 auto; }
+  .recipe-card {
+    background: white;
+    border-radius: 14px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .recipe-card:hover { transform: translateY(-2px); }
+  .recipe-card-header { background: #1F3864; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; }
+  .recipe-card-name { color: white; font-size: 1.05rem; font-weight: 700; }
+  .recipe-card-arrow { color: rgba(255,255,255,0.6); font-size: 1.2rem; }
+  .recipe-card-meta { padding: 0.75rem 1.25rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+  .meta-pill { font-size: 0.75rem; color: #666; background: #f0f4f8; padding: 3px 10px; border-radius: 20px; }
+  .allergen-pill { background: #FFF3E0; color: #E65100; }
+
+  /* RECIPE DETAIL */
+  #recipe-detail { display: none; padding: 1rem; max-width: 700px; margin: 0 auto; }
+  .detail-title-bar { background: #1F3864; color: white; padding: 1.25rem 1.5rem; border-radius: 14px; margin-bottom: 1rem; }
+  .detail-title { font-size: 1.5rem; font-weight: 700; }
+  .detail-meta { font-size: 0.82rem; opacity: 0.75; margin-top: 4px; }
+  .section-head { font-size: 0.7rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #2E75B6; border-bottom: 2px solid #2E75B6; padding-bottom: 4px; margin-bottom: 0.75rem; margin-top: 1.25rem; }
+  .ing-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .ing-table tr:nth-child(even) { background: #f7fafd; }
+  .ing-table td { padding: 8px 10px; border-bottom: 1px solid #eee; }
+  .ing-step { color: #aaa; font-size: 0.75rem; width: 36px; }
+  .ing-name { color: #333; }
+  .ing-amt { color: #2E5FA3; font-weight: 600; text-align: right; }
+  .method-step { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; line-height: 1.5; }
+  .step-num { color: #2E75B6; font-weight: 700; min-width: 20px; }
+  .allergen-bar { background: #FFF3E0; border-left: 4px solid #E65100; padding: 10px 14px; border-radius: 0 8px 8px 0; margin-top: 1rem; font-size: 0.85rem; }
+  .allergen-bar.none { background: #E8F5E9; border-color: #2E7D32; }
+  .allergen-label { font-weight: 700; color: #E65100; }
+  .allergen-bar.none .allergen-label { color: #2E7D32; }
+  .sub-recipe-head { background: #EEF4FF; border-left: 4px solid #2E75B6; padding: 8px 14px; border-radius: 0 8px 8px 0; margin: 1rem 0 0.5rem; font-size: 0.85rem; font-weight: 700; color: #2E5FA3; }
+  .loading { text-align: center; padding: 3rem; color: #888; }
+  .spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid #ddd; border-top-color: #2E75B6; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 1rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-msg { background: #fff3f3; border: 1px solid #ffcdd2; border-radius: 8px; padding: 1rem; color: #c62828; font-size: 0.85rem; margin: 1rem; }
+</style>
+</head>
+<body>
+
+<!-- LANGUAGE SELECTOR -->
+<div id="lang-screen">
+  <div class="lang-logo">UA Denver A26 · Compass Group / FLIK</div>
+  <div class="lang-title">Recipe Book 2026</div>
+  <div class="lang-sub">Select your language / Selecciona tu idioma</div>
+  <div class="lang-grid">
+    <button class="lang-btn" onclick="selectLanguage('en')">
+      <span class="lang-flag">🇺🇸</span>
+      <span class="lang-name">English</span>
+      <span class="lang-native">English</span>
+    </button>
+    <button class="lang-btn" onclick="selectLanguage('es')">
+      <span class="lang-flag">🇲🇽</span>
+      <span class="lang-name">Spanish</span>
+      <span class="lang-native">Español</span>
+    </button>
+    <button class="lang-btn" onclick="selectLanguage('am')">
+      <span class="lang-flag">🇪🇹</span>
+      <span class="lang-name">Amharic</span>
+      <span class="lang-native">አማርኛ</span>
+    </button>
+    <button class="lang-btn" onclick="selectLanguage('ne')">
+      <span class="lang-flag">🇳🇵</span>
+      <span class="lang-name">Nepali</span>
+      <span class="lang-native">नेपाली</span>
+    </button>
+    <button class="lang-btn" onclick="selectLanguage('fr')" style="grid-column: span 2;">
+      <span class="lang-flag">🇫🇷</span>
+      <span class="lang-name">French</span>
+      <span class="lang-native">Français</span>
+    </button>
+  </div>
+</div>
+
+<!-- RECIPE APP -->
+<div id="app">
+  <div class="app-header">
+    <div class="app-header-left">
+      <button class="back-btn" id="back-btn" onclick="goBack()">← Back</button>
+      <div>
+        <div class="app-title">UA Denver A26 — Recipes</div>
+        <div class="app-lang-badge" id="lang-badge"></div>
+      </div>
+    </div>
+    <button class="lang-switch-btn" onclick="switchLanguage()">🌐 Language</button>
+  </div>
+
+  <!-- Recipe List -->
+  <div id="recipe-list"></div>
+
+  <!-- Recipe Detail -->
+  <div id="recipe-detail"></div>
+</div>
+
+<script>
+const RECIPES_EN = [
+  { name: "Coconut Rice", yield: "184 servings", portion: "½ cup", dietary: "Vegan", hold: "Hold Hot", allergens: "None",
+    ingredients: [["1","Long Grain White Rice, Dry","6 lbs"],["1","Water","6 qt"],["1","Coconut Milk","6 qt"],["1","Kosher Salt","2 tbsp, 1¾ tsp"]],
+    method: ["Combine rice, water, salt, and coconut milk in pot.","Cover tightly with plastic wrap and foil.","Steam for 20 minutes.","Uncover, rest 5 minutes, and fluff before serving."] },
+  { name: "Strawberry Old Fashioned Oatmeal", yield: "~14 servings", portion: "1 cup", dietary: "Vegan, FIT", hold: "Hold Hot", allergens: "None",
+    ingredients: [["1","Strawberries, Fresh, Diced","2.5 cups"],["2","Water","2.5 qt"],["2","Quick Oatmeal Cereal, Dry","1 container (42 oz)"]],
+    method: ["Wash strawberries, cap and cut into ¼ inch dice. Set aside.","Bring water to a boil. Stir in oats.","Cook about 5 minutes over medium heat, stirring occasionally.","Once oatmeal is cooked, stir in diced strawberries."] },
+  { name: "Blueberry Lemon Overnight Oats", yield: "~8 servings", portion: "1¼ cup", dietary: "Vegetarian", hold: "Hold Cold", allergens: "Milk",
+    ingredients: [["1","Old Fashioned Oatmeal Cereal, Dry","1 container (42 oz)"],["1","Whole Milk","1 gallon"],["2","Honey","½ cup"],["2","White Chia Seeds","½ cup"],["2","Pure Vanilla Extract","2 tsp"],["2","Fresh Lemon, Zested","2 tsp"],["2","Fresh Blueberries","2 cups"]],
+    method: ["Mix dry oats with milk thoroughly. Cover and refrigerate at least 10-12 hours. Do not exceed 15 hours.","Mix in honey, chia seeds, vanilla, lemon zest, and blueberries.","Portion: 1¼ cup per serving."] },
+  { name: "Chipotle Ranch Dressing", yield: "~160 servings", portion: "1 fl oz", dietary: "Vegetarian", hold: "Hold Cold", allergens: "Egg, Milk, Soy",
+    ingredients: [["1","Homestyle Ranch Dressing","1 gallon"],["1","Chipotle Peppers, Canned","7 oz"],["1","Cilantro, Fresh, Chopped","4 oz"],["1","Lemon Juice, Fresh","⅓ cup"],["1","Kosher Salt","¾ tsp"],["1","Ground Black Pepper","½ tsp"]],
+    method: ["Puree chipotle peppers until smooth.","In a bowl, combine chipotle puree, cilantro, lemon juice, black pepper, salt, and ranch dressing.","Stir until evenly mixed."] },
+  { name: "Dill Caper Cream Cheese", yield: "~720 servings", portion: "1 tbsp", dietary: "Vegetarian", hold: "Hold Cold", allergens: "Milk",
+    ingredients: [["1","Cream Cheese, Bulk","6 blocks (18 lbs)"],["1","Capers, Drained","3 cups"],["1","Dill Weed, Fresh, Chopped","1 cup"]],
+    method: ["Place cream cheese and drained capers into a food processor and blend until creamy.","Add chopped fresh dill and pulse just to mix thoroughly."] },
+  { name: "Strawberry Balsamic Vinaigrette", yield: "120 servings", portion: "1 fl oz", dietary: "Vegan", hold: "Hold Cold", allergens: "Soy",
+    ingredients: [["1","Balsamic Vinaigrette","1 gallon"],["1","Strawberries, Fresh, Capped & Halved","1 lb"]],
+    method: ["Place all ingredients in a blender and blend until smooth."] },
+  { name: "Buffalo Cauliflower Wrap", yield: "60 servings", portion: "1 wrap", dietary: "Vegetarian", hold: "Hold Cold", allergens: "Wheat, Egg, Milk, Soy",
+    ingredients: [["1","Buffalo Cauliflower","24 qt"],["2","Lettuce, Iceberg, Shredded","6 qt"],["2","Tomatoes, Diced","6 qt"],["2","Red Onions, Fresh, Diced","3 qt"],["2","Cheddar Cheese, Shredded","3 qt"],["2","Frank's RedHot Buffalo Wing Sauce","3 qt"],["2","Homestyle Ranch Dressing","6 qt"],["2","Tortilla, 12\" Flour","60 ea"]],
+    method: ["Prepare buffalo cauliflower per sub-recipe.","Build each wrap: ½ cup cauliflower, 2 tbsp lettuce, 2 tbsp tomato, 1 tbsp cheddar, 1 tbsp red onion, 1 tbsp buffalo sauce, 1 fl oz ranch.","Fold, roll, cut in half and serve."],
+    sub: { name: "Roasted Buffalo Cauliflower", ingredients: [["1","Cauliflower, Fresh, ½\" Pieces","48 lbs"],["1","Canola Oil","3 cups"],["1","Kosher Salt","2 tbsp"],["1","Ground Black Pepper","¼ cup"],["2","Frank's RedHot Buffalo Wing Sauce","3 cups"]], method: ["Toss cauliflower with oil, salt, and pepper.","Roast at 350°F for 15 minutes.","Toss with buffalo sauce."] } },
+  { name: "Sauteed Cabbage, Carrots & Bell Peppers", yield: "300 servings", portion: "½ cup", dietary: "Vegan", hold: "Hold Hot", allergens: "None",
+    ingredients: [["1","Canola Oil","0.5 qt"],["1","Green Cabbage, Sliced","23 qt"],["1","Carrots, Fresh, Julienne Sliced","22 qt"],["1","Red Bell Peppers, Fresh, Julienne Sliced","6 qt"],["1","Minced Garlic Cloves, Fresh","⅓ cup"],["1","Ground Cumin","2 tbsp"],["1","Chili Powder","2 tbsp"]],
+    method: ["Heat oil in a saute pan. Saute cabbage until soft.","Add carrots and peppers and cook until soft.","Add garlic, cumin, and chili powder and cook until fragrant."] },
+  { name: "Caribbean Chickpea & Potato Curry", yield: "200 servings", portion: "1 cup", dietary: "Vegan", hold: "Hold Hot", allergens: "None",
+    ingredients: [["1","Vegetable Broth","8.5 qt"],["2","Canola Oil","2 cups"],["2","Minced Garlic Cloves, Fresh","2 cups"],["2","Curry Powder","2 cups"],["2","Diced Onions, Fresh","6 qt"],["3","Peeled, Diced Potatoes, Fresh","12 qt"],["3","Ground Puree Tomatoes","12 qt"],["3","Garbanzo Beans","26 qt"],["3","Kosher Salt","¾ cup"],["3","Ground Black Pepper","¾ cup"],["3","Whole Bay Leaf","22 ea"],["3","Lime Juice, Fresh","2 cups"],["3","Minced Seeded Habanero Peppers","⅔ cup"],["4","Cilantro, Fresh, Chopped","3 cups"]],
+    method: ["Prepare vegetable broth.","Heat oil in a rondeau. Saute garlic and onions until translucent. Add curry powder and cook until fragrant.","Add potatoes and garbanzo beans, tomatoes, salt, pepper, bay leaf, lime juice, habaneros, and broth. Simmer until potatoes are tender.","Discard bay leaf. Stir in cilantro."] },
+  { name: "Citrus-Garlic Mojo Braised Pork Shoulder", yield: "300 servings", portion: "1 serving", dietary: "", hold: "Hold Hot", allergens: "Milk, Soy",
+    ingredients: [["1","Boneless Boston Butt Pork Roast","87.5 lbs"],["1","Kosher Salt","1¼ cup"],["1","Ground Black Pepper","¼ cup"],["1","Canola Oil","2 cups"],["2","Mojo Marinade","10 qt"],["3","Onions, Fresh, Sliced","13 qt"],["3","Whole Bay Leaf","19 ea"],["3","Chicken Broth","13 qt"]],
+    method: ["Cut pork into large chunks. Season with salt and pepper. Sear on all sides 8-10 minutes.","Place onions and bay leaves in pan. Return pork. Pour mojo marinade and chicken broth over pork. Cover tightly.","Braise at 325°F for 1.5-2 hours until fork tender.","Rest 15 minutes. Shred pork. Reduce braising liquid and toss with pork."],
+    sub: { name: "Mojo Marinade", ingredients: [["1","Cilantro, Fresh, Chopped","5 qt"],["1","Fresh Orange Juice","4 qt"],["1","Lime Juice, Fresh","3 qt"],["1","Mint, Fresh, Chopped","1 qt"],["1","Canola Oil","2 cups"],["1","Fresh Orange, Zest","1¼ cup"],["1","Minced Garlic Cloves, Fresh","1½ cups"],["1","Oregano, Fresh, Chopped","1¼ cup"],["1","Ground Cumin","¼ cup"],["1","Kosher Salt","¾ cup"],["1","Ground Black Pepper","¼ cup"]], method: ["Whisk together all ingredients until combined."] } },
+  { name: "Pesto Cheese Tortellini", yield: "~108 servings", portion: "1½ cup", dietary: "Vegetarian", hold: "Hold Hot", allergens: "Wheat, Egg, Milk",
+    ingredients: [["1","Cheese Tortellini","3 cases (27 lbs)"],["2","Extra Virgin Olive Oil","1½ cup"],["2","Asparagus, Fresh, Chopped","13 qt"],["2","Pesto Sauce without Nuts","4 qt"],["2","Hot Water (reserved pasta water)","2 qt"],["2","Julienne Sun-Dried Tomato","3 cups"],["2","Cheese, Parmesan, Grated","4 qt"]],
+    method: ["Cook tortellini per package instructions. Drain, reserving pasta water.","Heat oil in saute pan. Add asparagus, cook 3 minutes until tender but crisp.","Add tortellini, pesto, pasta water, and sun-dried tomatoes. Cook until heated through.","Remove from heat and garnish with parmesan cheese."] },
+  { name: "Berry Chicken Salad", yield: "50 servings", portion: "1 serving", dietary: "", hold: "Hold Cold", allergens: "None",
+    ingredients: [["1","Grilled Lemon Pepper Chicken Breast","2 lbs"],["2","Lettuce, Spring Mix","3 lbs"],["2","Sunflower Seeds, Unsalted, Roasted","1½ cups"],["2","Strawberries, Fresh, Diced","1 qt"],["2","Fresh Blackberries","1 qt"],["2","English Cucumbers, Diced","1 qt"]],
+    method: ["Grill chicken with lemon pepper seasoning to internal temp of 165°F. Chill and slice.","In cold buffet vessel, add spring mix, cucumbers, berries, seeds, and chicken."] },
+  { name: "Black Bean Corn Salad", yield: "200 servings", portion: "1 serving", dietary: "Vegetarian", hold: "Hold Cold", allergens: "Milk",
+    ingredients: [["1","Roasted Corn","3 qt"],["2","Romaine Lettuce, 1\" Chopped","13 qt"],["2","Tomatoes, Cherry","2 qt"],["2","Red Onions, Julienne Sliced","1 qt"],["2","Black Beans","3 qt"],["2","Cheddar Cheese, Shredded","3 qt"]],
+    method: ["Prepare roasted corn per sub-recipe.","Assemble each salad: 4 oz romaine, ¼ cup corn, ¼ cup black beans, 1 oz tomato, ½ oz red onion, 1 oz cheddar.","Serve with chipotle ranch on the side."],
+    sub: { name: "Roasted Corn", ingredients: [["1","Fresh Corn Kernels","4 qt"],["1","Extra Virgin Olive Oil","¼ cup"],["1","Basil, Fresh, Minced","⅓ cup"],["1","Rosemary, Fresh, Minced","⅓ cup"],["1","Kosher Salt","1 tsp"],["1","Ground Black Pepper","1 tsp"]], method: ["Toss corn with oil, rosemary, basil, salt and pepper.","Roast at 350°F for 15 minutes."] } },
+  { name: "Roasted Jerk Chicken with Pineapple Salsa", yield: "150 servings", portion: "1 serving", dietary: "", hold: "Hold Hot", allergens: "None",
+    ingredients: [["1","Skinless, Boneless Chicken Thighs","46 lbs"],["1","Jamaican Jerk Seasoning","14 oz"],["1","Canola Oil","1 cup, 2 tbsp"],["2","Pineapple Salsa","10 qt"]],
+    method: ["Cut chicken thighs in half. Coat in jerk seasoning and oil. Marinate overnight.","Roast or grill to internal temp of 165°F.","Arrange chicken slightly overlapped. Spoon pineapple salsa across center."],
+    sub: { name: "Pineapple Salsa", ingredients: [["1","Pineapple, Fresh, Diced","12 qt"],["1","Red Onions, Chopped Fine","15 oz"],["1","Green Onions, Thin Sliced","12 oz"],["1","Jalapeno Peppers, Minced","4 oz"],["1","Cilantro, Fresh, Chopped","1½ cups"],["1","Lime Juice, Fresh","¼ cup"],["1","Kosher Salt","½ tsp"],["1","Ground Black Pepper","½ tsp"]], method: ["Toss all ingredients together until evenly mixed."] } },
+  { name: "Sweet Chili Glazed Chicken Banh Mi", yield: "600 servings", portion: "1 sandwich", dietary: "", hold: "Hold Cold", allergens: "Wheat, Egg, Soy",
+    ingredients: [["1","Chicken Breast, Boneless Skinless","80 lbs"],["1","Ginger Root, Fresh, Minced","2 cups"],["1","Minced Garlic Cloves, Fresh","2 cups"],["1","Kosher Salt","1 cup"],["1","Ground Black Pepper","¼ cup"],["2","Sweet Thai Chili Sauce","5 qt"],["3","Unseasoned Rice Wine Vinegar","4 qt"],["3","Water","4 qt"],["3","Granulated Sugar","2 qt"],["3","Kosher Salt","½ cup"],["3","Carrots, Julienne Sliced","5 qt"],["3","Cucumbers, Julienne Sliced","5 qt"],["3","Chinese Cabbage (Napa), Shredded","35 qt"],["4","Sriracha Mayonnaise","10 qt"],["5","French Baguette, 28\"","43 loaves"],["5","Cilantro, Fresh, Chopped","2 qt"]],
+    method: ["Cut chicken into 5 oz portions. Toss with ginger, garlic, salt and pepper. Mark on grill.","Finish in oven. Glaze with sweet chili sauce before done. Chill.","Combine vinegar, water, sugar, salt. Boil to dissolve. Cool. Toss with vegetables. Marinate 1 hour.","Build sandwich: ½ cup sriracha mayo, sliced chicken, slaw, cilantro."],
+    sub: { name: "Sriracha Mayonnaise", ingredients: [["1","Mayonnaise","10 qt"],["1","Sriracha Hot Chili Sauce","2 qt"]], method: ["Combine mayo and sriracha. Refrigerate."] } },
+  { name: "Blackened Chicken, Pepperjack & Cajun Aioli Sub Roll", yield: "60 servings", portion: "1 sandwich", dietary: "", hold: "Hold Cold", allergens: "Wheat, Egg, Milk, Soy",
+    ingredients: [["1","Cajun Aioli","8 qt"],["2","Cajun Spiced Chicken Breast","60 lbs"],["2","Pepper Jack Cheese, Sliced","13 qt"],["2","Lettuce, Individual Leaf","8 qt"],["2","Tomatoes, Sliced ¼\"","19 qt"],["2","White Sub Roll, Deluxe Italian","60 ea"]],
+    method: ["Cook chicken. Chill and slice thin on slicer.","Spread ½ cup cajun aioli on both sides of roll.","Layer chicken, pepper jack, lettuce, and tomato. Close and cut into 2\" portions."],
+    sub: { name: "Cajun Aioli", ingredients: [["1","Mayonnaise","8 qt"],["1","Frank's RedHot Buffalo Wing Sauce","2 cups"],["1","Cajun Spice Rub","2 cups"],["1","Minced Garlic Cloves, Fresh","¼ cup"],["1","Lemon Juice, Fresh","¼ cup"],["1","Kosher Salt","2 tbsp"]], method: ["Combine all ingredients until fully incorporated. Refrigerate."] } },
+  { name: "Quinoa Spinach Salad with Sweet Thai Dressing", yield: "50 servings", portion: "½ cup", dietary: "Vegan", hold: "Hold Cold", allergens: "Wheat, Soy, Sesame",
+    ingredients: [["1","Quinoa, Cooked","5 lbs"],["2","Spinach, Fresh","2.5 lbs"],["2","Pineapple, Fresh, Diced","25 oz"],["2","Red Bell Peppers, Fresh, ½\" Diced","20 oz"],["2","Green Onions, Finely Diced","10 oz"],["2","Cilantro, Fresh, Chopped","5 oz"],["2","Asian Sesame Dressing","20 oz"]],
+    method: ["Cook quinoa per sub-recipe. Let cool completely.","Add spinach, pineapple, red bell peppers, green onions, and cilantro. Gently fold.","Add dressing and toss lightly."],
+    sub: { name: "Cooked Quinoa", ingredients: [["1","Quinoa, Dry","1.5 qt"],["1","Water","5 qt"]], method: ["Bring water and quinoa to boil. Reduce to simmer 15-20 minutes until tender. Drain and chill."] } },
+];
+
+const LANG_NAMES = { en: "English", es: "Español", am: "አማርኛ", ne: "नेपाली", fr: "Français" };
+const LANG_FLAGS = { en: "🇺🇸", es: "🇲🇽", am: "🇪🇹", ne: "🇳🇵", fr: "🇫🇷" };
+
+let currentLang = 'en';
+let translatedRecipes = null;
+let currentView = 'list';
+
+async function selectLanguage(lang) {
+  currentLang = lang;
+  document.getElementById('lang-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('lang-badge').textContent = LANG_FLAGS[lang] + ' ' + LANG_NAMES[lang];
+  document.getElementById('back-btn').style.display = 'none';
+  currentView = 'list';
+
+  if (lang === 'en') {
+    translatedRecipes = RECIPES_EN;
+    renderRecipeList(RECIPES_EN);
+  } else {
+    renderLoading();
+    await translateAndRender(lang);
+  }
+}
+
+function renderLoading() {
+  document.getElementById('recipe-list').innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Translating recipes...</p>
+    </div>`;
+  document.getElementById('recipe-detail').style.display = 'none';
+  document.getElementById('recipe-list').style.display = 'block';
+}
+
+async function translateAndRender(lang) {
+  const langNames = { es: 'Spanish', am: 'Amharic', ne: 'Nepali', fr: 'French' };
+  const targetLang = langNames[lang];
+
+  // Translate in batches of 3 recipes to avoid timeout
+  const translated = [];
+  const batchSize = 3;
+
+  for (let i = 0; i < RECIPES_EN.length; i += batchSize) {
+    const batch = RECIPES_EN.slice(i, i + batchSize);
+    const prompt = `Translate the following recipe data to ${targetLang}. Return ONLY valid JSON, no markdown, no explanation. Translate all text values (names, ingredient names, method steps) but keep numbers, measurements (qt, lbs, oz, cups, tbsp, tsp), and units in their original form. Keep allergen names in English too.
+
+Input JSON:
+${JSON.stringify(batch)}`;
+
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 4000,
+          messages: [{ role: "user", content: prompt }]
+        })
+      });
+      const data = await response.json();
+      const text = data.content[0].text.replace(/```json|```/g, '').trim();
+      const batchTranslated = JSON.parse(text);
+      translated.push(...batchTranslated);
+    } catch (e) {
+      // Fall back to English for this batch
+      translated.push(...batch);
+    }
+
+    // Update progress
+    document.getElementById('recipe-list').innerHTML = `
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Translating recipes... ${Math.min(i + batchSize, RECIPES_EN.length)} of ${RECIPES_EN.length}</p>
+      </div>`;
+  }
+
+  translatedRecipes = translated;
+  renderRecipeList(translated);
+}
+
+function renderRecipeList(recipes) {
+  document.getElementById('recipe-detail').style.display = 'none';
+  document.getElementById('recipe-list').style.display = 'block';
+  document.getElementById('back-btn').style.display = 'none';
+  currentView = 'list';
+
+  const html = recipes.map((r, i) => `
+    <div class="recipe-card" onclick="showRecipe(${i})">
+      <div class="recipe-card-header">
+        <div class="recipe-card-name">${r.name}</div>
+        <div class="recipe-card-arrow">›</div>
+      </div>
+      <div class="recipe-card-meta">
+        <span class="meta-pill">${r.yield}</span>
+        <span class="meta-pill">${r.portion}</span>
+        ${r.dietary ? `<span class="meta-pill">${r.dietary}</span>` : ''}
+        ${r.allergens !== 'None' ? `<span class="meta-pill allergen-pill">⚠ ${r.allergens}</span>` : ''}
+      </div>
+    </div>`).join('');
+
+  document.getElementById('recipe-list').innerHTML = `<div style="padding-bottom:2rem">${html}</div>`;
+}
+
+function showRecipe(index) {
+  const r = translatedRecipes[index];
+  document.getElementById('recipe-list').style.display = 'none';
+  document.getElementById('recipe-detail').style.display = 'block';
+  document.getElementById('back-btn').style.display = 'inline-block';
+  currentView = 'detail';
+
+  const ingRows = r.ingredients.map((ing, i) =>
+    `<tr><td class="ing-step">${ing[0]}</td><td class="ing-name">${ing[1]}</td><td class="ing-amt">${ing[2]}</td></tr>`
+  ).join('');
+
+  const methodSteps = r.method.map((step, i) =>
+    `<div class="method-step"><span class="step-num">${i+1}.</span><span>${step}</span></div>`
+  ).join('');
+
+  let subHtml = '';
+  if (r.sub) {
+    const subIngRows = r.sub.ingredients.map(ing =>
+      `<tr><td class="ing-step">${ing[0]}</td><td class="ing-name">${ing[1]}</td><td class="ing-amt">${ing[2]}</td></tr>`
+    ).join('');
+    const subSteps = r.sub.method.map((step, i) =>
+      `<div class="method-step"><span class="step-num">${i+1}.</span><span>${step}</span></div>`
+    ).join('');
+    subHtml = `
+      <div class="sub-recipe-head">↳ Sub-Recipe: ${r.sub.name}</div>
+      <table class="ing-table">${subIngRows}</table>
+      <div class="section-head" style="margin-top:0.75rem">Method</div>
+      ${subSteps}`;
+  }
+
+  const allergenClass = r.allergens === 'None' ? 'none' : '';
+  document.getElementById('recipe-detail').innerHTML = `
+    <div class="detail-title-bar">
+      <div class="detail-title">${r.name}</div>
+      <div class="detail-meta">${r.yield} · ${r.portion} · ${r.hold}</div>
+    </div>
+    <div class="section-head">Ingredients</div>
+    <table class="ing-table">${ingRows}</table>
+    <div class="section-head">Method</div>
+    ${methodSteps}
+    ${subHtml}
+    <div class="allergen-bar ${allergenClass}" style="margin-bottom:2rem">
+      <span class="allergen-label">Allergens: </span>${r.allergens}
+    </div>`;
+}
+
+function goBack() {
+  if (currentView === 'detail') {
+    renderRecipeList(translatedRecipes);
+  }
+}
+
+function switchLanguage() {
+  translatedRecipes = null;
+  document.getElementById('lang-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('recipe-list').innerHTML = '';
+  document.getElementById('recipe-detail').innerHTML = '';
+}
+</script>
+</body>
+</html>
